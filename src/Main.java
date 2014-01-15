@@ -22,6 +22,7 @@ public class Main {
 		}
 
 		print("Ho-hoh! Good to see ya! Find a spot around the hearth if you can!");
+		print("hey github nice to cya");
 		print("Now, lets begin a test game! Ye can borrow one our beginner decks over there.");
 
 		// startGame();
