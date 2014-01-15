@@ -1,25 +1,60 @@
 import java.io.BufferedReader;
+import java.awt.BorderLayout;
+import java.awt.EventQueue;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.PrintStream;
+
+import javax.swing.JFrame;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTextArea;
+import javax.swing.JTextField;
+import javax.swing.UIManager;
+import javax.swing.UnsupportedLookAndFeelException;
+
+
+
+
+
+
+
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.Scanner;
 import java.util.Stack;
 
-public class Main {
-	static TestRedirect t;
+public class Main implements ActionListener{
+	static JTextArea textArea = new JTextArea(5,20);
+	static JFrame frame = new JFrame("hearthstone-os");
+	static JFrame inputframe = new JFrame("hearthstone-os");
+	static JTextField textField = new JTextField(20);
+	static boolean command = false;
+	 static String commands;
 
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub
 
 		// who doesnt love some local variables!
-		Variables v = new Variables();
-		
-		
+
+
+
 		//final TextDemo b = new TextDemo();
+
+
+		new Main();
+
+
+		Variables v = new Variables();
+
+
 		
-		t = new TestRedirect();
-		
-		t.print("s");
-		
+        
+        
+
+
 		// scanner for inputs
 		Scanner input = new Scanner(System.in);
 
@@ -57,25 +92,51 @@ public class Main {
 		startingHand(v.hand, v.realtinkdeck, input, v.isFirst);
 
 		//ok now the actual game loop is starting.
-		
-		
-		
-		
+
+
+
+
 		while(true)
 		{
-		
+
 			//playMinion(v.enemyminions, new Minion(4,5,"Chillwind Yeti"));
 			enemyTurn(v);
 
 
 			playerTurn(v,input);
-		
+
 		}
+
 
 
 
 	}
 
+
+	public Main()
+	{
+		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		frame.setLayout(new BorderLayout());
+		frame.setSize(1000, 500);
+		frame.setLocationRelativeTo(null);
+		frame.setVisible(true);
+		
+		inputframe.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		inputframe.setLayout(new BorderLayout());
+		inputframe.setSize(200, 80);
+		inputframe.setLocationRelativeTo(null);
+		inputframe.setVisible(true);
+		
+        textArea.setEditable(false);
+        JScrollPane scrollPane = new JScrollPane(textArea);
+        
+        
+        textField.addActionListener(this);
+        textField = new JTextField(20);
+        frame.add(textArea);
+        inputframe.add(textField);
+		
+	}
 	public static Card drawCard(Deck deck) {
 		int temprand = random(deck.deck.size() - 1);
 		Card tempcard = deck.deck.get(temprand);
@@ -111,7 +172,7 @@ public class Main {
 		{
 			
 
-			//prepareInput();
+			
 			String inputs = input.nextLine();
 
 			//play 1
@@ -308,6 +369,7 @@ public class Main {
 			{
 				updateBoard(v.playerhealth, v.enemyhealth, v.playerminions, v.enemyminions, v.hand, v);
 			}
+		
 
 		}
 
@@ -320,7 +382,7 @@ public class Main {
 
 	public static void updateBoard(int playerhealth, int enemyhealth, Minion[] playerminions, Minion[] enemyminions, Hand hand, Variables v) {
 		//print("");
-		nl();//clearConsole();//print("Heres the current board!");
+		clearConsole();//nl();//clearConsole();//print("Heres the current board!");
 		print("Enemy controls:                                                                   Enemy Mana: " + v.enemymana + "/" + v.enemymaxmana);
 		print("    0. Enemy has " + v.enemyhealth + "health");
 		for (int i = 0; i < 6; i++) {
@@ -361,25 +423,27 @@ public class Main {
 		return false;
 	}
 
-	public static void prepareInput()
-	{
-		BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
-		try {
-			String line = in.readLine();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-
-	}
+	
+	public void actionPerformed(ActionEvent evt) {
+        commands = textField.getText();
+        command = true;
+        
+        textField.setText("");
+    }
+	
 	private static void print(String s) {
 		System.out.println(s);
-		t.print(s);
+        textArea.append(s + "\n");
 	}
 
 	private static void print(int s) {
 		System.out.println(s);
 		
+	}
+	
+	public static void clearConsole()
+	{
+		textArea.setText("");
 	}
 
 	public static void nl() {
@@ -541,5 +605,8 @@ public class Main {
 		minion.destroy();
 		
 	}
+	
+	
+
 
 }
