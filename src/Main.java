@@ -5,13 +5,21 @@ import java.util.Scanner;
 import java.util.Stack;
 
 public class Main {
+	static TestRedirect t;
 
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub
 
 		// who doesnt love some local variables!
 		Variables v = new Variables();
-
+		
+		
+		//final TextDemo b = new TextDemo();
+		
+		t = new TestRedirect();
+		
+		t.print("s");
+		
 		// scanner for inputs
 		Scanner input = new Scanner(System.in);
 
@@ -84,6 +92,15 @@ public class Main {
 		v.playermana = v.playermaxmana;
 		
 		drawCardToHand(v.hand,v.realtinkdeck);
+		
+		for (int i = 0; i < 6; i++) {
+			if (v.playerminions[i].name != "null") {
+				v.playerminions[i].canAttack = true;
+			}
+			if (v.playerminions[i].name == "null") {
+				v.playerminions[i].canAttack = false;
+			}
+		}
 		
 		updateBoard(v.playerhealth, v.enemyhealth, v.playerminions, v.enemyminions, v.hand, v);
 
@@ -357,10 +374,12 @@ public class Main {
 	}
 	private static void print(String s) {
 		System.out.println(s);
+		t.print(s);
 	}
 
 	private static void print(int s) {
 		System.out.println(s);
+		
 	}
 
 	public static void nl() {
@@ -480,6 +499,8 @@ public class Main {
 		{
 			target.destroy();
 		}
+		
+		attacker.canAttack = false;
 		
 		
 	}

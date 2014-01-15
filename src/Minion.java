@@ -7,6 +7,9 @@ public class Minion{
 	int damage;
 	String name;
 	boolean canAttack = false;
+	boolean windfury = false;
+	boolean divineshield = false;
+	boolean charge = false;
 
     // the MountainBike subclass has
     // one constructor
