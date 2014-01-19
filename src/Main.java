@@ -29,6 +29,9 @@ import javax.swing.UnsupportedLookAndFeelException;
 
 
 
+
+
+
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.LinkedList;
@@ -86,6 +89,7 @@ public class Main{
 	            synchronized (holder) {
 	                holder.add(textField.getText());
 	                holder.notify();
+	                textField.setText("");
 	            }
 	            //frame.dispose();
 	        }
@@ -226,38 +230,47 @@ public class Main{
 						try {
 							cardPlayed = Integer.parseInt(number);
 						} catch (NumberFormatException e) {
-							print("That's not a number!");
+							msg(v,"That's not a number!");
 							break playcardloop;
 						}
 
 						if(cardPlayed > v.hand.hand.size())
 						{
-							print("You don't have that many cards in your hand!");
+							msg(v,"You don't have that many cards in your hand!");
 							break playcardloop;
 						}
 						else
 						{
 							if(v.hand.hand.get(cardPlayed -1).manacost <= v.playermana)
 							{
-								checknull:
-									for(int i = 0; i < 6; i++)
-									{
-										if(v.playerminions[i].name == "null")
+								if(v.hand.hand.get(cardPlayed-1).isMinion == true)
+								{
+									checknull:
+										for(int i = 0; i < 6; i++)
 										{
-											print("played");
-											v.playerminions[i] = minionFromCard(v.hand.hand.get(cardPlayed - 1));
-											v.playermana = v.playermana - v.hand.hand.get(cardPlayed -1).manacost;
+											if(v.playerminions[i].name == "null")
+											{
+												//print("played");
+												v.playerminions[i] = minionFromCard(v.hand.hand.get(cardPlayed - 1));
+												v.playermana = v.playermana - v.hand.hand.get(cardPlayed -1).manacost;
 
-											v.hand.remove(cardPlayed - 1);
+												v.hand.remove(cardPlayed - 1);
 
-											break checknull;
-											
+												break checknull;
+
+											}
 										}
-									}
+								}
+								else
+								{
+									v.playermana = v.playermana - v.hand.hand.get(cardPlayed -1).manacost;
+									useSpell(v.hand.hand.get(cardPlayed-1),v);
+									v.hand.remove(cardPlayed - 1);
+								}
 							}
 							else
 							{
-								print("I don't have enough mana!");
+								msg(v,"I don't have enough mana!");
 							}
 						}
 
@@ -281,7 +294,7 @@ public class Main{
 						try {
 							target = Integer.parseInt(number);
 						} catch (NumberFormatException e) {
-							print("Thats not a number");
+							msg(v,"Thats not a number");
 							break attackminionloop;
 						}
 
@@ -295,7 +308,7 @@ public class Main{
 							try {
 								attacker = Integer.parseInt(number2);
 							} catch (NumberFormatException e) {
-								print("Thats not a number");
+								msg(v,"Thats not a number");
 								break attackminionloop;
 							}
 							
@@ -317,23 +330,24 @@ public class Main{
 											print("attacking TO THE FACE with"  + v.playerminions[attacker-1].name);
 											//call an attack function here! congrats it worked
 											v.enemyhealth = v.enemyhealth - v.playerminions[attacker-1].damage;
+											v.playerminions[attacker-1].canAttack = false;
 										}
 										else
 										{
-											print("that guy cant attack yet. wait a turn!");
+											msg(v,"that guy cant attack yet. wait a turn!");
 										}
 										
 										
 									}
 									else
 									{
-										print("thats not a valid player minion");
+										msg(v,"That's not a valid player minion.");
 										break attackminionloop;
 									}
 								}
 								else
 								{
-									print("comon, choose > 1");
+									msg(v,"comon, choose > 1");
 									break attackminionloop;
 								}
 							}
@@ -347,38 +361,39 @@ public class Main{
 										{
 											if(v.playerminions[attacker-1].canAttack == true)
 											{
-												print("attacking " + v.enemyminions[target-1].name + " with " + v.playerminions[attacker-1].name);
+												msg(v,"attacking " + v.enemyminions[target-1].name + " with " + v.playerminions[attacker-1].name);
 												//call an attack function here! congrats it worked
 												attackMinion(v.playerminions[attacker-1], v.enemyminions[target-1],v);
+												v.playerminions[attacker-1].canAttack = false;
 											}
 											else
 											{
-												print("that guy cant attack yet. wait a turn!");
+												msg(v,"that guy cant attack yet. wait a turn!");
 											}
 										}
 										else
 										{
-											print("thats not a valid player minion");
+											msg(v,"thats not a valid player minion");
 											break attackminionloop;
 										}
 									}
 									else
 									{
-										print("comon, choose > 1");
+										msg(v,"comon, choose > 1");
 										break attackminionloop;
 									}
 
 								}
 								else
 								{
-									print("u wot m8");
+									msg(v,"u wot m8");
 									break attackminionloop;
 								}
 							}
 
 							else
 							{
-								print("thats not a valid enemy minion!");
+								msg(v,"invalid enemy minion");
 								break attackminionloop;
 							}
 
@@ -387,7 +402,7 @@ public class Main{
 						}
 						else
 						{
-							print("attack _ with _");
+							msg(v,"Usage: attack _ with _");
 						}
 					}
 			}
@@ -400,6 +415,10 @@ public class Main{
 
 				}
 
+			}
+			else
+			{
+				msg(v,"That wasn't even a command, dumbo. Commands: play, attack, endturn");
 			}
 			
 			if(playerTurn == true)
@@ -418,13 +437,32 @@ public class Main{
 	}
 
 	public static void updateBoard(int playerhealth, int enemyhealth, Minion[] playerminions, Minion[] enemyminions, Hand hand, Variables v) {
+
 		//print("");
 		clearConsole();//nl();//clearConsole();//print("Heres the current board!");
+
+		if(v.info.equalsIgnoreCase("") == false)
+		{
+			print(v.info);
+			v.info = "";
+			nl();
+		}
+
+
 		print("Enemy controls:                                                                   Enemy Mana: " + v.enemymana + "/" + v.enemymaxmana);
 		print("    0. Enemy has " + v.enemyhealth + "health");
 		for (int i = 0; i < 6; i++) {
 			if (enemyminions[i].name != "null") {
-				print("    " + (i+1) + ". " + enemyminions[i].name + " can do " + enemyminions[i].damage + " damage, and has " + enemyminions[i].currenthealth + "/" + enemyminions[i].maxhealth + " health.");
+
+				if(enemyminions[i].currenthealth > 0)
+				{
+
+					print("    " + (i+1) + ". " + enemyminions[i].name + " can do " + enemyminions[i].damage + " damage, and has " + enemyminions[i].currenthealth + "/" + enemyminions[i].maxhealth + " health.");
+				}
+				else
+				{
+					enemyminions[i].destroy();
+				}
 			}
 		}
 		nl();
@@ -432,9 +470,17 @@ public class Main{
 		print("You control:");
 		print("    0. You has " + v.playerhealth + "health");
 		for (int i = 0; i < 6; i++) {
-			if (playerminions[i].name != "null") {
-				print("    " + (i+1) + ". " + playerminions[i].name + " can do " + playerminions[i].damage + " damage, and has " + playerminions[i].currenthealth + "/" + playerminions[i].maxhealth + " health.");
 
+			if(playerminions[i].currenthealth > 0)
+			{
+
+				if (playerminions[i].name != "null") {
+					print("    " + (i+1) + ". " + playerminions[i].name + " can do " + playerminions[i].damage + " damage, and has " + playerminions[i].currenthealth + "/" + playerminions[i].maxhealth + " health.");
+				}
+				else
+				{
+					playerminions[i].destroy();
+				}
 			}
 		}
 		nl();
@@ -444,6 +490,15 @@ public class Main{
 		}
 
 	}
+
+
+	
+	public static void updateBoard(Variables v)
+	{
+		updateBoard(v.playerhealth,v.enemyhealth,v.playerminions,v.enemyminions,v.hand,v);
+	}
+	
+	
 
 	public static int random(int outof) {
 		return 1 + (int) (Math.random() * ((outof - 1) + 1));
@@ -461,7 +516,10 @@ public class Main{
 	}
 
 	
-	
+	public static void msg(Variables v, String string)
+	{
+		v.info = string;
+	}
 	
 	private static void print(String s) {
 		System.out.println(s);
@@ -521,6 +579,7 @@ public class Main{
 		}
 
 		while (true) {
+			clearConsole();
 			print("Here's your starting hand! You go first.");
 			for (int i = 0; i < 3; i++) {
 				print(i + 1 + ". " + hand.hand.get(i).name + " (" + hand.hand.get(i).manacost + ")");
@@ -645,9 +704,103 @@ public class Main{
 		
 	}
 	
-	public static String getCommand(String ask)
+	public static Minion targetMinion(Variables v) throws InterruptedException
 	{
-		return new Scanner(System.in).nextLine();
+
+		boolean isEnemy;
+
+		playerorenemyloop:
+			while(true)
+			{
+				updateBoard(v);
+
+				print("Target enemy minion, player minion, or the FACE?");
+
+				while (holder.isEmpty())
+					holder.wait();
+
+				String inputs = holder.remove(0);
+
+				if(inputs.equalsIgnoreCase("enemy"))
+				{
+					isEnemy = true;
+					break playerorenemyloop;
+				}
+				else if(inputs.equalsIgnoreCase("player"))
+				{
+					isEnemy = true;
+					break playerorenemyloop;
+				}
+				else if(inputs.equalsIgnoreCase("face"))
+				{
+					return new Minion(80, 80, "Face");
+				}
+
+			}
+		while(true)
+		{
+
+			updateBoard(v);
+
+			print("Target which minion?");
+
+			while (holder.isEmpty())
+				holder.wait();
+
+			String inputs = holder.remove(0);
+
+			int target = Integer.parseInt(inputs);
+
+			if(isEnemy == true)
+			{
+
+				if(v.enemyminions[target-1].name.equalsIgnoreCase("null") == false)
+				{
+					
+					return v.enemyminions[target-1];
+				}
+				else
+				{
+					msg(v,"That wasn't a good target.");
+				}
+			}
+			else
+			{
+				if(v.enemyminions[target-1].name.equalsIgnoreCase("null") == false)
+				{
+					return v.enemyminions[target-1];
+				}
+				else
+				{
+					msg(v,"That wasn't a good target.");
+				}
+			}
+
+		}
 	}
+	
+	public static void useSpell(Card card, Variables v) throws InterruptedException
+	{
+		//this is gonna be a long database of spells. good luck.
+		if(card.name.equalsIgnoreCase("Fireball"))
+		{
+			Minion tempminion = targetMinion(v);
+			if(tempminion.name.equalsIgnoreCase("Face") == false)
+			{
+				tempminion.damage(6);
+			}
+			else
+			{
+				v.enemyhealth = v.enemyhealth - 6;
+			}
+		}
+		
+		
+		
+		
+		
+	}
+	
+	
 	
 }

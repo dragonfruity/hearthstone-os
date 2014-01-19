@@ -12,6 +12,7 @@ public class Variables {
 	int enemymaxmana = 0;
 	int enemymana = 0;
 	public Deck realtinkdeck;
+	String info = "";
 	
 	PlayerData pd = new PlayerData();
 	
