@@ -13,9 +13,11 @@ public class Variables {
 	int enemymana = 0;
 	public Deck realtinkdeck;
 	
+	PlayerData pd = new PlayerData();
+	
 	public Variables()
 	{
-		
+		realtinkdeck = pd.deckAllMinions;
 	}
 
 }

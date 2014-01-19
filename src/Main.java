@@ -8,6 +8,7 @@ import java.io.OutputStream;
 import java.io.PrintStream;
 
 import javax.swing.JFrame;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
@@ -21,20 +22,33 @@ import javax.swing.UnsupportedLookAndFeelException;
 
 
 
+
+
+
+
+
+
+
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Scanner;
 import java.util.Stack;
 
-public class Main implements ActionListener{
-	static JTextArea textArea = new JTextArea(5,20);
+public class Main{
+	private static JTextArea textArea = new JTextArea(5,20);
 	static JFrame frame = new JFrame("hearthstone-os");
 	static JFrame inputframe = new JFrame("hearthstone-os");
 	static JTextField textField = new JTextField(20);
-	static boolean command = false;
-	 static String commands;
+	final static  List<String> holder = new LinkedList<String>();
+	
 
-	public static void main(String[] args) {
+
+
+
+	public static void main(String[] args) throws InterruptedException{
+
 		// TODO Auto-generated method stub
 
 		// who doesnt love some local variables!
@@ -44,12 +58,43 @@ public class Main implements ActionListener{
 		//final TextDemo b = new TextDemo();
 
 
-		new Main();
+		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		frame.setLayout(new BorderLayout());
+		frame.setSize(1000, 500);
+		frame.setLocationRelativeTo(null);
+		frame.setVisible(true);
+		
+		inputframe.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		inputframe.setLayout(new BorderLayout());
+		inputframe.setSize(200, 80);
+		inputframe.setLocationRelativeTo(null);
+		inputframe.setVisible(true);
+		
+        textArea.setEditable(false);
+        JScrollPane scrollPane = new JScrollPane(textArea);
+        
+        
+        textField = new JTextField(20);
+        
+
+        frame.add(textArea);
+        inputframe.add(textField);
+        
+        textField.addActionListener(new ActionListener() {
+	        @Override
+	        public void actionPerformed(ActionEvent e) {
+	            synchronized (holder) {
+	                holder.add(textField.getText());
+	                holder.notify();
+	            }
+	            //frame.dispose();
+	        }
+	    });
 
 
 		Variables v = new Variables();
 
-
+		
 		
         
         
@@ -57,6 +102,8 @@ public class Main implements ActionListener{
 
 		// scanner for inputs
 		Scanner input = new Scanner(System.in);
+		
+		synchronized (holder) {
 
 		// filling the array with invisible minions
 		for (int i = 0; i < 6; i++) {
@@ -76,9 +123,9 @@ public class Main implements ActionListener{
 		Stack<Card> tinkdeck = new Stack<Card>();
 		for (int i = 0; i < 30; i++) {
 			if ((i % 2) == 0) {
-				tinkdeck.push(new Card("Devilsaur", 4));
+				tinkdeck.push(new Card("Fireball", 4, false));
 			} else {
-				tinkdeck.push(new Card("Squirrel", 1));
+				tinkdeck.push(new Card("Squirrel", 1, true));
 			}
 		}
 
@@ -108,35 +155,12 @@ public class Main implements ActionListener{
 		}
 
 
-
+		}
 
 	}
 
 
-	public Main()
-	{
-		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		frame.setLayout(new BorderLayout());
-		frame.setSize(1000, 500);
-		frame.setLocationRelativeTo(null);
-		frame.setVisible(true);
-		
-		inputframe.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		inputframe.setLayout(new BorderLayout());
-		inputframe.setSize(200, 80);
-		inputframe.setLocationRelativeTo(null);
-		inputframe.setVisible(true);
-		
-        textArea.setEditable(false);
-        JScrollPane scrollPane = new JScrollPane(textArea);
-        
-        
-        textField.addActionListener(this);
-        textField = new JTextField(20);
-        frame.add(textArea);
-        inputframe.add(textField);
-		
-	}
+	
 	public static Card drawCard(Deck deck) {
 		int temprand = random(deck.deck.size() - 1);
 		Card tempcard = deck.deck.get(temprand);
@@ -145,7 +169,7 @@ public class Main implements ActionListener{
 
 	}
 	
-	public static void playerTurn(Variables v, Scanner input)
+	public static void playerTurn(Variables v, Scanner input) throws InterruptedException
 	{
 		
 		//first we do setup such as setting mana values, drawing a card, etc.
@@ -171,9 +195,22 @@ public class Main implements ActionListener{
 		while(playerTurn)
 		{
 			
-
+//			callCommand();
+//			
+//			while(command == true)
+//			{
+//				
+//			}
+//			
+//			print(commandstring);
 			
-			String inputs = input.nextLine();
+			
+			//String inputs = getCommand("What action do you take?");
+			
+			while (holder.isEmpty())
+	            holder.wait();
+
+	        String inputs = holder.remove(0);
 
 			//play 1
 			if(inputs.length() == 6)
@@ -424,12 +461,7 @@ public class Main implements ActionListener{
 	}
 
 	
-	public void actionPerformed(ActionEvent evt) {
-        commands = textField.getText();
-        command = true;
-        
-        textField.setText("");
-    }
+	
 	
 	private static void print(String s) {
 		System.out.println(s);
@@ -480,7 +512,7 @@ public class Main implements ActionListener{
 	}
 
 
-	public static Hand startingHand(Hand hand, Deck deck, Scanner input, boolean isFirst)
+	public static Hand startingHand(Hand hand, Deck deck, Scanner input, boolean isFirst) throws InterruptedException
 	{
 		for (int i = 0; i < 3; i++) {
 			Card tempcard = drawCard(deck);
@@ -497,8 +529,15 @@ public class Main implements ActionListener{
 			String inputs = null;
 			print("Type ready once you're ready to go! Or, type redraw and a number to mulligan the card.");
 			//prepareInput();
-			inputs = input.nextLine();
+			
+			
+			//inputs = getCommand("What action do you take?");
+			while (holder.isEmpty())
+	            holder.wait();
 
+	        inputs = holder.remove(0);
+			
+			
 			if (inputs.equalsIgnoreCase("ready")) {
 				return hand;
 			}
@@ -606,7 +645,9 @@ public class Main implements ActionListener{
 		
 	}
 	
+	public static String getCommand(String ask)
+	{
+		return new Scanner(System.in).nextLine();
+	}
 	
-
-
 }
