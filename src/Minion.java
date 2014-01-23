@@ -1,3 +1,6 @@
+import java.util.ArrayList;
+import java.util.Stack;
+
 
 public class Minion{
         
@@ -5,11 +8,14 @@ public class Minion{
 	int maxhealth;
 	int currenthealth;
 	int damage;
+	//int basedamage;
 	String name;
 	boolean canAttack = false;
 	boolean windfury = false;
+	boolean taunt = false;
 	boolean divineshield = false;
 	boolean charge = false;
+	Stack<String> custom = new Stack<String>();
 
     // the MountainBike subclass has
     // one constructor
@@ -17,6 +23,7 @@ public class Minion{
         maxhealth = healthpassed;
         currenthealth = healthpassed;
         damage = damagepassed;
+       // basedamage = damagepassed;
         name = namepassed;
     }   
         
@@ -44,7 +51,20 @@ public class Minion{
     	maxhealth = 1;
     	currenthealth = 1;
     	damage = 0;
+    	//basedamage = 0;
     	name = "null";
+    }
+    
+    public int getDamage()
+    {
+    	int tempdamage = damage;
+    	if(custom.contains("Dark Iron Dwarf"))
+    	{
+    		tempdamage = tempdamage + 2;
+    	}
+    	
+    	
+    	return tempdamage;
     }
 
 }

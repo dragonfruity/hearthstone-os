@@ -15,6 +15,14 @@ public class MinionDatabase {
 		{
 			return new Minion(5, 5, card.name);
 		}
+		if(card.name == "Dark Iron Dwarf")
+		{
+			return new Minion(4, 4, card.name);
+		}
+		if(card.name == "Sen'jin Shieldmasta")
+		{
+			return new Minion(3, 5, card.name);
+		}
 
 		return null;
 	}

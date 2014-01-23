@@ -32,8 +32,12 @@ import javax.swing.UnsupportedLookAndFeelException;
 
 
 
+
+
+
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Scanner;
@@ -42,7 +46,7 @@ import java.util.Stack;
 public class Main{
 	private static JTextArea textArea = new JTextArea(5,20);
 	static JFrame frame = new JFrame("hearthstone-os");
-	static JFrame inputframe = new JFrame("hearthstone-os");
+	//static JFrame inputframe = new JFrame("hearthstone-os");
 	static JTextField textField = new JTextField(20);
 	final static  List<String> holder = new LinkedList<String>();
 	
@@ -67,11 +71,11 @@ public class Main{
 		frame.setLocationRelativeTo(null);
 		frame.setVisible(true);
 		
-		inputframe.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		inputframe.setLayout(new BorderLayout());
-		inputframe.setSize(200, 80);
-		inputframe.setLocationRelativeTo(null);
-		inputframe.setVisible(true);
+//		inputframe.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+//		inputframe.setLayout(new BorderLayout());
+//		inputframe.setSize(200, 80);
+//		//inputframe.setLocationRelativeTo(null);
+//		inputframe.setVisible(true);
 		
         textArea.setEditable(false);
         JScrollPane scrollPane = new JScrollPane(textArea);
@@ -80,8 +84,10 @@ public class Main{
         textField = new JTextField(20);
         
 
-        frame.add(textArea);
-        inputframe.add(textField);
+        frame.add(textArea,BorderLayout.CENTER);
+        frame.add(textField,BorderLayout.SOUTH);
+        
+        textField.requestFocusInWindow();
         
         textField.addActionListener(new ActionListener() {
 	        @Override
@@ -110,7 +116,7 @@ public class Main{
 		synchronized (holder) {
 
 		// filling the array with invisible minions
-		for (int i = 0; i < 6; i++) {
+		for (int i = 0; i < 8; i++) {
 			v.playerminions[i] = new Minion(0, 1, "null");
 			v.enemyminions[i] = new Minion(0, 1, "null");
 		}
@@ -129,7 +135,7 @@ public class Main{
 			if ((i % 2) == 0) {
 				tinkdeck.push(new Card("Fireball", 4, false));
 			} else {
-				tinkdeck.push(new Card("Squirrel", 1, true));
+				tinkdeck.push(new Card("Holy Smite", 1, false));
 			}
 		}
 
@@ -182,7 +188,7 @@ public class Main{
 		
 		drawCardToHand(v.hand,v.realtinkdeck);
 		
-		for (int i = 0; i < 6; i++) {
+		for (int i = 0; i < 8; i++) {
 			if (v.playerminions[i].name != "null") {
 				v.playerminions[i].canAttack = true;
 			}
@@ -246,12 +252,12 @@ public class Main{
 								if(v.hand.hand.get(cardPlayed-1).isMinion == true)
 								{
 									checknull:
-										for(int i = 0; i < 6; i++)
+										for(int i = 0; i < 8; i++)
 										{
 											if(v.playerminions[i].name == "null")
 											{
 												//print("played");
-												v.playerminions[i] = minionFromCard(v.hand.hand.get(cardPlayed - 1));
+												v.playerminions[i] = minionFromCard(v.hand.hand.get(cardPlayed - 1),v);
 												v.playermana = v.playermana - v.hand.hand.get(cardPlayed -1).manacost;
 
 												v.hand.remove(cardPlayed - 1);
@@ -329,7 +335,7 @@ public class Main{
 										{
 											print("attacking TO THE FACE with"  + v.playerminions[attacker-1].name);
 											//call an attack function here! congrats it worked
-											v.enemyhealth = v.enemyhealth - v.playerminions[attacker-1].damage;
+											v.enemyhealth = v.enemyhealth - v.playerminions[attacker-1].getDamage();
 											v.playerminions[attacker-1].canAttack = false;
 										}
 										else
@@ -361,10 +367,42 @@ public class Main{
 										{
 											if(v.playerminions[attacker-1].canAttack == true)
 											{
-												msg(v,"attacking " + v.enemyminions[target-1].name + " with " + v.playerminions[attacker-1].name);
-												//call an attack function here! congrats it worked
-												attackMinion(v.playerminions[attacker-1], v.enemyminions[target-1],v);
-												v.playerminions[attacker-1].canAttack = false;
+												
+												//Check for taunt!
+												if(v.enemyminions[target-1].taunt == true)
+												{
+													msg(v,"attacking " + v.enemyminions[target-1].name + " with " + v.playerminions[attacker-1].name);
+													//call an attack function here! congrats it worked
+													attackMinion(v.playerminions[attacker-1], v.enemyminions[target-1],v,attacker-1,target-1,v.playerminions,v.enemyminions);
+													v.playerminions[attacker-1].canAttack = false;
+												}
+												else
+												{
+													boolean isTauntOnBoard = false;
+													for(int i = 0; i < 8; i++)
+													{
+														if(v.enemyminions[i].taunt)
+														{
+															isTauntOnBoard = true;
+														}
+													}
+													
+													if(isTauntOnBoard)
+													{
+														msg(v,"Dude, attack the huge taunter first! DUH");
+														break attackminionloop;
+													}
+													else
+													{
+														msg(v,"attacking " + v.enemyminions[target-1].name + " with " + v.playerminions[attacker-1].name);
+														//call an attack function here! congrats it worked
+														attackMinion(v.playerminions[attacker-1], v.enemyminions[target-1],v,attacker-1,target-1,v.playerminions,v.enemyminions);
+														v.playerminions[attacker-1].canAttack = false;
+													}
+												}
+												
+												
+												
 											}
 											else
 											{
@@ -429,7 +467,53 @@ public class Main{
 
 		}
 
+		endPlayerTurn(v);
 
+	}
+	
+	public static void endPlayerTurn(Variables v)
+	{
+		nl();
+		nl();
+		nl();
+		nl();
+		
+		for (int i = 0; i < 8; i++) {
+			if (v.playerminions[i].name != "null") 
+			{
+				
+				for(int x = 0; x < v.playerminions[i].custom.size(); x++)
+				{
+					
+					if(v.playerminions[i].custom.get(x).equalsIgnoreCase("Dark Iron Dwarf"))
+					{
+						v.playerminions[i].custom.remove("Dark Iron Dwarf");
+						//print("removed a buff.");
+
+					}
+					
+				}
+
+			}
+			if (v.enemyminions[i].name != "null") 
+			{
+				
+				for(int x = 0; x < v.enemyminions[i].custom.size(); x++)
+				{
+					
+					if(v.enemyminions[i].custom.get(x).equalsIgnoreCase("Dark Iron Dwarf"))
+					{
+						v.enemyminions[i].custom.remove("Dark Iron Dwarf");
+						//print("removed a buff.");
+
+					}
+					
+				}
+
+			}
+			
+			
+		}
 	}
 
 	public static void insertCard(Deck deck, Card card) {
@@ -450,37 +534,48 @@ public class Main{
 
 
 		print("Enemy controls:                                                                   Enemy Mana: " + v.enemymana + "/" + v.enemymaxmana);
-		print("    0. Enemy has " + v.enemyhealth + "health");
-		for (int i = 0; i < 6; i++) {
+		print("    0. Enemy has " + v.enemyhealth + " health");
+		for (int i = 0; i < 8; i++) {
 			if (enemyminions[i].name != "null") {
 
 				if(enemyminions[i].currenthealth > 0)
 				{
 
-					print("    " + (i+1) + ". " + enemyminions[i].name + " can do " + enemyminions[i].damage + " damage, and has " + enemyminions[i].currenthealth + "/" + enemyminions[i].maxhealth + " health.");
+					print("    " + (i+1) + ". " + enemyminions[i].name + " can do " + enemyminions[i].getDamage() + " damage, and has " + enemyminions[i].currenthealth + "/" + enemyminions[i].maxhealth + " health.");
+					if(enemyminions[i].taunt == true)
+					{
+						printsame(" Taunt.");
+					}
 				}
 				else
 				{
-					enemyminions[i].destroy();
+					destroyMinion(enemyminions[i],v,i,enemyminions);
 				}
 			}
 		}
 		nl();
 
 		print("You control:");
-		print("    0. You has " + v.playerhealth + "health");
-		for (int i = 0; i < 6; i++) {
+		print("    0. You have " + v.playerhealth + " health");
+		for (int i = 0; i < 8; i++) {
 
 			if(playerminions[i].currenthealth > 0)
 			{
 
 				if (playerminions[i].name != "null") {
-					print("    " + (i+1) + ". " + playerminions[i].name + " can do " + playerminions[i].damage + " damage, and has " + playerminions[i].currenthealth + "/" + playerminions[i].maxhealth + " health.");
+					print("    " + (i+1) + ". " + playerminions[i].name + " can do " + playerminions[i].getDamage() + " damage, and has " + playerminions[i].currenthealth + "/" + playerminions[i].maxhealth + " health.");
+					if(playerminions[i].taunt == true)
+					{
+						printsame(" Taunt.");
+						printsame(" Taunt.");
+					}
 				}
-				else
-				{
-					playerminions[i].destroy();
-				}
+				
+			}
+			else
+			{
+				print(playerminions[i].name);
+				destroyMinion(playerminions[i],v,i,playerminions);
 			}
 		}
 		nl();
@@ -522,15 +617,19 @@ public class Main{
 	}
 	
 	private static void print(String s) {
-		System.out.println(s);
-        textArea.append(s + "\n");
-	}
-
-	private static void print(int s) {
-		System.out.println(s);
+		
+		System.out.print("\n" + s);
+		
+        textArea.append("\n" + s);
 		
 	}
 	
+	private static void printsame(String s)
+	{
+		System.out.print(s);
+        textArea.append(s);
+	}
+
 	public static void clearConsole()
 	{
 		textArea.setText("");
@@ -550,12 +649,12 @@ public class Main{
 
 	public static void playMinion(Minion[] board, Minion minion) {
 
-		for (int i = 0; i < 6; i++) {
+		for (int i = 0; i < 8; i++) {
 			if (board[i].name == "null") {
 				board[i] = minion;
 
 				// escape loop
-				i = 6;
+				i = 8;
 			}
 
 		}
@@ -647,19 +746,19 @@ public class Main{
 		}
 	}
 	
-	public static void attackMinion(Minion attacker, Minion target, Variables v)
+	public static void attackMinion(Minion attacker, Minion target, Variables v, int attackerpos, int targetpos, Minion[] attackerminions, Minion[] targetminions)
 	{
-		attacker.damage(target.damage);
-		target.damage(attacker.damage);
+		attacker.damage(target.getDamage());
+		target.damage(attacker.getDamage());
 		
 		if(attacker.currenthealth <= 0)
 		{
-			destroyMinion(attacker, v);
+			destroyMinion(attacker, v, attackerpos, attackerminions);
 		}
 		
 		if(target.currenthealth <= 0)
 		{
-			target.destroy();
+			destroyMinion(target,v, targetpos, targetminions);
 		}
 		
 		attacker.canAttack = false;
@@ -670,26 +769,38 @@ public class Main{
 	
 
 	
-	public static void enemyTurn(Variables v)
+	public static void enemyTurn(Variables v) throws InterruptedException
 	{
+		for(int i = 0; i < 8; i++)
+		{
+			if(v.enemyminions[i].name.equalsIgnoreCase("null") == false)
+			{
+				v.playerhealth = v.playerhealth - v.enemyminions[i].getDamage();
+			}
+		}
+		
 		v.enemymaxmana++;
 		v.enemymana = v.enemymaxmana;
 		
 		//alright so have the enemy AI do stuff here. for now lets just make them play a Yeti.
-		if(v.enemymana >= 4)
+		if(v.enemymana == 3)
 		{
-			playMinion(v.enemyminions, new Minion(4,5,"Chillwind Yeti"));
+			playMinion(v.enemyminions, minionFromCard(new Card("Sen'jin Shieldmasta", 3, true), v));
+		}
+		if(v.enemymana == 4)
+		{
+			for(int i = 0; i < 8; i++)
+			{
+			playMinion(v.enemyminions, new Minion(4,5,"Chillwind Yeti" + (i+1)));
+			}
+			
 		}
 
 	}
 
-	public static Minion minionFromCard(Card card)
-	{
-		MinionDatabase db = new MinionDatabase();
-		return db.minionFromCard(card);
-	}
+
 	
-	public static void destroyMinion(Minion minion, Variables v)
+	public static void destroyMinion(Minion minion, Variables v, int pos, Minion[] minions)
 	{
 		//first, trigger deathrattle
     	if(minion.name == "Squirrel")
@@ -702,19 +813,155 @@ public class Main{
 		
 		minion.destroy();
 		
+		Minion[] temparray = new Minion[8];// = minions;
+		
+		for(int i = 0; i < 8; i++)
+		{
+			temparray[i] = minions[i];
+		}
+		
+		
+		//print(pos + "");
+		
+		
+		
+		if(pos == 0)
+		{
+		
+		minions[0] = temparray[1];
+		minions[1] = temparray[2];
+		minions[2] = temparray[3];
+		minions[3] = temparray[4];
+		minions[4] = temparray[5];
+		minions[5] = temparray[6];
+		minions[6] = temparray[7];
+		minions[7] = temparray[0];	
+		
+		
+		
+		}
+		if(pos == 1)
+		{
+		minions[0] = temparray[0];
+		minions[1] = temparray[2];
+		minions[2] = temparray[3];
+		minions[3] = temparray[4];
+		minions[4] = temparray[5];
+		minions[5] = temparray[6];
+		minions[6] = temparray[7];
+		minions[7] = temparray[1];
+		}
+		if(pos == 2)
+		{
+		minions[0] = temparray[0];
+		minions[1] = temparray[1];
+		minions[2] = temparray[3];
+		minions[3] = temparray[4];
+		minions[4] = temparray[5];
+		minions[5] = temparray[6];
+		minions[6] = temparray[7];
+		minions[7] = temparray[2];
+		}
+		if(pos == 3)
+		{
+		minions[0] = temparray[0];
+		minions[1] = temparray[1];
+		minions[2] = temparray[2];
+		minions[3] = temparray[4];
+		minions[4] = temparray[5];
+		minions[5] = temparray[6];
+		minions[6] = temparray[7];
+		minions[7] = temparray[3];
+		}
+		if(pos == 4)
+		{
+		minions[0] = temparray[0];
+		minions[1] = temparray[1];
+		minions[2] = temparray[2];
+		minions[3] = temparray[3];
+		minions[4] = temparray[5];
+		minions[5] = temparray[6];
+		minions[6] = temparray[7];
+		minions[7] = temparray[4];
+		}
+		if(pos == 5)
+		{
+		minions[0] = temparray[0];
+		minions[1] = temparray[1];
+		minions[2] = temparray[2];
+		minions[3] = temparray[3];
+		minions[4] = temparray[4];
+		minions[5] = temparray[6];
+		minions[6] = temparray[7];
+		minions[7] = temparray[5];
+		}
+		if(pos == 6)
+		{
+		minions[0] = temparray[0];
+		minions[1] = temparray[1];
+		minions[2] = temparray[2];
+		minions[3] = temparray[3];
+		minions[4] = temparray[4];
+		minions[5] = temparray[5];
+		minions[6] = temparray[7];
+		minions[7] = temparray[6];
+		}
+		if(pos == 7)
+		{
+		minions[0] = temparray[0];
+		minions[1] = temparray[1];
+		minions[2] = temparray[2];
+		minions[3] = temparray[3];
+		minions[4] = temparray[4];
+		minions[5] = temparray[5];
+		minions[6] = temparray[6];
+		minions[7] = temparray[7];
+		}
+		
+		updateBoard(v);
+		print("FIX WHY IS THERE STUFF APPEARING HERE,");
+		
+	}
+	
+	public static void moveLastup(Minion[] arr, int pos) {
+	    Minion last = arr[arr.length-1];
+
+	    // Copy sub-array starting at pos to pos+1
+	    System.arraycopy(arr, pos, arr, pos + 1, arr.length - pos - 1);
+
+	    arr[pos] = last;
 	}
 	
 	public static Minion targetMinion(Variables v) throws InterruptedException
 	{
 
 		boolean isEnemy;
+		
+		int minions = 0;
+		
+		for(int i = 0; i < 8; i++)
+		{
+			if(v.enemyminions[i].name.equalsIgnoreCase("null") == false)
+			{
+				minions++;
+			}
+			if(v.playerminions[i].name.equalsIgnoreCase("null") == false)
+			{
+				minions++;
+			}
+		}
+		
+		if(minions == 0)
+		{
+			return null;
+		}
 
 		playerorenemyloop:
 			while(true)
 			{
 				updateBoard(v);
 
-				print("Target enemy minion, player minion, or the FACE?");
+				print("Target enemy minion, player minion");
 
 				while (holder.isEmpty())
 					holder.wait();
@@ -728,13 +975,10 @@ public class Main{
 				}
 				else if(inputs.equalsIgnoreCase("player"))
 				{
-					isEnemy = true;
+					isEnemy = false;
 					break playerorenemyloop;
 				}
-				else if(inputs.equalsIgnoreCase("face"))
-				{
-					return new Minion(80, 80, "Face");
-				}
+				
 
 			}
 		while(true)
@@ -766,9 +1010,9 @@ public class Main{
 			}
 			else
 			{
-				if(v.enemyminions[target-1].name.equalsIgnoreCase("null") == false)
+				if(v.playerminions[target-1].name.equalsIgnoreCase("null") == false)
 				{
-					return v.enemyminions[target-1];
+					return v.playerminions[target-1];
 				}
 				else
 				{
@@ -779,12 +1023,93 @@ public class Main{
 		}
 	}
 	
+	
+	public static Minion targetMinionorFace(Variables v) throws InterruptedException
+	{
+
+		boolean isEnemy;
+
+		playerorenemyloop:
+			while(true)
+			{
+				updateBoard(v);
+
+				print("Target enemy minion, player minion, or the FACE?");
+
+				while (holder.isEmpty())
+					holder.wait();
+
+				String inputs = holder.remove(0);
+
+				if(inputs.equalsIgnoreCase("enemy"))
+				{
+					isEnemy = true;
+					break playerorenemyloop;
+				}
+				else if(inputs.equalsIgnoreCase("player"))
+				{
+					isEnemy = false;
+					break playerorenemyloop;
+				}
+				else if(inputs.equalsIgnoreCase("face"))
+				{
+					return new Minion(80, 80, "Face");
+				}
+
+			}
+		while(true)
+		{
+
+			updateBoard(v);
+
+			print("Target which minion?");
+
+			while (holder.isEmpty())
+				holder.wait();
+
+			String inputs = holder.remove(0);
+
+			int target = Integer.parseInt(inputs);
+			
+			if(target > 0)
+			{
+
+			if(isEnemy == true)
+			{
+
+				if(v.enemyminions[target-1].name.equalsIgnoreCase("null") == false)
+				{
+					
+					return v.enemyminions[target-1];
+				}
+				else
+				{
+					msg(v,"That wasn't a good target.");
+				}
+			}
+			else
+			{
+				if(v.playerminions[target-1].name.equalsIgnoreCase("null") == false)
+				{
+					return v.playerminions[target-1];
+				}
+				else
+				{
+					msg(v,"That wasn't a good target.");
+				}
+			}
+			
+			}
+
+		}
+	}
+	
 	public static void useSpell(Card card, Variables v) throws InterruptedException
 	{
 		//this is gonna be a long database of spells. good luck.
 		if(card.name.equalsIgnoreCase("Fireball"))
 		{
-			Minion tempminion = targetMinion(v);
+			Minion tempminion = targetMinionorFace(v);
 			if(tempminion.name.equalsIgnoreCase("Face") == false)
 			{
 				tempminion.damage(6);
@@ -795,10 +1120,40 @@ public class Main{
 			}
 		}
 		
+		if(card.name.equalsIgnoreCase("Holy Smite"))
+		{
+			Minion tempminion = targetMinionorFace(v);
+			if(tempminion.name.equalsIgnoreCase("Face") == false)
+			{
+				tempminion.damage(2);
+			}
+			else
+			{
+				v.enemyhealth = v.enemyhealth - 2;
+			}
+		}
+
+	}
+	
+	public static Minion minionFromCard(Card card, Variables v) throws InterruptedException
+	{
+		MinionDatabase db = new MinionDatabase();
+		Minion minion = db.minionFromCard(card);
+		
+		if(minion.name == "Dark Iron Dwarf")
+		{
+			Minion target = targetMinion(v);
+			
+			target.custom.add("Dark Iron Dwarf");
+		}
+		
+		if(minion.name == "Sen'jin Shieldmasta")
+		{
+			minion.taunt = true;
+		}
 		
 		
-		
-		
+		return minion;
 	}
 	
 	
