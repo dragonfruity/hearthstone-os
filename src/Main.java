@@ -35,6 +35,7 @@ import javax.swing.UnsupportedLookAndFeelException;
 
 
 
+
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.Arrays;
@@ -46,6 +47,8 @@ import java.util.Stack;
 public class Main{
 	private static JTextArea textArea = new JTextArea(5,20);
 	static JFrame frame = new JFrame("hearthstone-os");
+	static JFrame displayframe = new JFrame("hearthstone-os");
+	static DrawPanel panel;
 	//static JFrame inputframe = new JFrame("hearthstone-os");
 	static JTextField textField = new JTextField(20);
 	final static  List<String> holder = new LinkedList<String>();
@@ -55,40 +58,28 @@ public class Main{
 
 
 	public static void main(String[] args) throws InterruptedException{
-
-		// TODO Auto-generated method stub
-
-		// who doesnt love some local variables!
-
-
-
-		//final TextDemo b = new TextDemo();
+		displayframe.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);   // set frame to exit
+        // when it is closed
+		panel = new DrawPanel();
+		
+		displayframe.add(panel);
 
 
+		displayframe.setSize(1000, 1000);         // window is 500 pixels wide, 400 high
+		displayframe.setVisible(true);  
+		
+		
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		frame.setLayout(new BorderLayout());
 		frame.setSize(1000, 500);
 		frame.setLocationRelativeTo(null);
 		frame.setVisible(true);
-		
-//		inputframe.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-//		inputframe.setLayout(new BorderLayout());
-//		inputframe.setSize(200, 80);
-//		//inputframe.setLocationRelativeTo(null);
-//		inputframe.setVisible(true);
-		
         textArea.setEditable(false);
         JScrollPane scrollPane = new JScrollPane(textArea);
-        
-        
         textField = new JTextField(20);
-        
-
         frame.add(textArea,BorderLayout.CENTER);
         frame.add(textField,BorderLayout.SOUTH);
-        
         textField.requestFocusInWindow();
-        
         textField.addActionListener(new ActionListener() {
 	        @Override
 	        public void actionPerformed(ActionEvent e) {
@@ -100,73 +91,43 @@ public class Main{
 	            //frame.dispose();
 	        }
 	    });
-
-
 		Variables v = new Variables();
-
-		
-		
-        
-        
-
-
+		panel.v = v;
 		// scanner for inputs
 		Scanner input = new Scanner(System.in);
-		
 		synchronized (holder) {
-
 		// filling the array with invisible minions
 		for (int i = 0; i < 8; i++) {
 			v.playerminions[i] = new Minion(0, 1, "null");
 			v.enemyminions[i] = new Minion(0, 1, "null");
 		}
-
 		print("Ho-hoh! Good to see ya! Find a spot around the hearth if you can!");
 		print("hey github nice to cya");
 		print("Now, lets begin a test game! Ye can borrow one our beginner decks over there.");
-
 		// startGame();
-
 		// test game
 		print("This deck is full of only 1/1 squirrels and 5/5 Devilsaurs. It's Tinkmaster's favorite!");
-
 		Stack<Card> tinkdeck = new Stack<Card>();
 		for (int i = 0; i < 30; i++) {
 			if ((i % 2) == 0) {
-				tinkdeck.push(new Card("Fireball", 4, false));
+				tinkdeck.push(cardFromName("Aldor Peacekeeper"));
 			} else {
-				tinkdeck.push(new Card("Holy Smite", 1, false));
+				tinkdeck.push(cardFromName("Amani Berserker"));
 			}
 		}
-
 		v.realtinkdeck = new Deck(tinkdeck);
-
 		nl();
 		// alright, lets draw a starting hand.
-
 		v.isFirst = true;
-
 		startingHand(v.hand, v.realtinkdeck, input, v.isFirst);
-
 		//ok now the actual game loop is starting.
-
-
-
-
 		while(true)
 		{
-
 			//playMinion(v.enemyminions, new Minion(4,5,"Chillwind Yeti"));
 			enemyTurn(v);
-
-
 			playerTurn(v,input);
-
 		}
-
-
 		}
-
 	}
 
 
@@ -521,7 +482,9 @@ public class Main{
 	}
 
 	public static void updateBoard(int playerhealth, int enemyhealth, Minion[] playerminions, Minion[] enemyminions, Hand hand, Variables v) {
-
+		panel.ready = true;
+		panel.v = v;
+		panel.redraw();
 		//print("");
 		clearConsole();//nl();//clearConsole();//print("Heres the current board!");
 
@@ -567,7 +530,12 @@ public class Main{
 					if(playerminions[i].taunt == true)
 					{
 						printsame(" Taunt.");
-						printsame(" Taunt.");
+						
+					}
+					if(playerminions[i].isEnraged() == true)
+					{
+						printsame(" Enraged.");
+						
 					}
 				}
 				
@@ -586,15 +554,11 @@ public class Main{
 
 	}
 
-
-	
 	public static void updateBoard(Variables v)
 	{
 		updateBoard(v.playerhealth,v.enemyhealth,v.playerminions,v.enemyminions,v.hand,v);
 	}
 	
-	
-
 	public static int random(int outof) {
 		return 1 + (int) (Math.random() * ((outof - 1) + 1));
 	}
@@ -610,7 +574,6 @@ public class Main{
 		return false;
 	}
 
-	
 	public static void msg(Variables v, String string)
 	{
 		v.info = string;
@@ -655,19 +618,18 @@ public class Main{
 
 				// escape loop
 				i = 8;
+				print("played a guy");
 			}
 
 		}
 
 	}
 
-	
 	public static void drawCardToHand(Hand hand, Deck deck)
 	{
 		Card tempcard = drawCard(deck);
 		hand.draw(tempcard);
 	}
-
 
 	public static Hand startingHand(Hand hand, Deck deck, Scanner input, boolean isFirst) throws InterruptedException
 	{
@@ -766,9 +728,6 @@ public class Main{
 		
 	}
 	
-	
-
-	
 	public static void enemyTurn(Variables v) throws InterruptedException
 	{
 		for(int i = 0; i < 8; i++)
@@ -783,13 +742,13 @@ public class Main{
 		v.enemymana = v.enemymaxmana;
 		
 		//alright so have the enemy AI do stuff here. for now lets just make them play a Yeti.
-		if(v.enemymana == 3)
+		if(v.enemymana == 2)
 		{
-			playMinion(v.enemyminions, minionFromCard(new Card("Sen'jin Shieldmasta", 3, true), v));
+			playMinion(v.enemyminions, minionFromCard(cardFromName("Murloc Scout"),v));
 		}
 		if(v.enemymana == 4)
 		{
-			for(int i = 0; i < 8; i++)
+			for(int i = 0; i < 10; i++)
 			{
 			playMinion(v.enemyminions, new Minion(4,5,"Chillwind Yeti" + (i+1)));
 			}
@@ -798,8 +757,6 @@ public class Main{
 
 	}
 
-
-	
 	public static void destroyMinion(Minion minion, Variables v, int pos, Minion[] minions)
 	{
 		//first, trigger deathrattle
@@ -937,21 +894,23 @@ public class Main{
 
 		boolean isEnemy;
 		
-		int minions = 0;
+		int playerminions = 0;
+		
+		int enemyminions = 0;
 		
 		for(int i = 0; i < 8; i++)
 		{
 			if(v.enemyminions[i].name.equalsIgnoreCase("null") == false)
 			{
-				minions++;
+				playerminions++;
 			}
 			if(v.playerminions[i].name.equalsIgnoreCase("null") == false)
 			{
-				minions++;
+				enemyminions++;
 			}
 		}
 		
-		if(minions == 0)
+		if(playerminions + enemyminions == 0)
 		{
 			return null;
 		}
@@ -993,7 +952,12 @@ public class Main{
 
 			String inputs = holder.remove(0);
 
+			try
+			{
 			int target = Integer.parseInt(inputs);
+			
+			if(target > 0 && target < 9)
+			{
 
 			if(isEnemy == true)
 			{
@@ -1019,16 +983,204 @@ public class Main{
 					msg(v,"That wasn't a good target.");
 				}
 			}
+			
+			}
+			
+			}
+			
+			catch (NumberFormatException e)
+	        {
+	            print("Input string is not a sequence of digits.");
+	        }
 
 		}
 	}
 	
+	public static Minion targetEnemyMinion(Variables v) throws InterruptedException
+
+	{
+
+		boolean isEnemy;
+		
+		int playerminions = 0;
+		
+		int enemyminions = 0;
+		
+		for(int i = 0; i < 8; i++)
+		{
+			
+			if(v.enemyminions[i].name.equalsIgnoreCase("null") == false)
+			{
+				enemyminions++;
+			}
+		}
+		
+		if(playerminions + enemyminions == 0)
+		{
+			return null;
+		}
+
+		playerorenemyloop:
+			isEnemy = true;
+		while(true)
+		{
+
+			updateBoard(v);
+
+			print("Target which minion?");
+
+			while (holder.isEmpty())
+				holder.wait();
+
+			String inputs = holder.remove(0);
+
+			try
+			{
+			int target = Integer.parseInt(inputs);
+			
+			if(target > 0 && target < 9)
+			{
+
+			if(isEnemy == true)
+			{
+
+				if(v.enemyminions[target-1].name.equalsIgnoreCase("null") == false)
+				{
+					
+					return v.enemyminions[target-1];
+				}
+				else
+				{
+					msg(v,"That wasn't a good target.");
+				}
+			}
+			else
+			{
+				if(v.playerminions[target-1].name.equalsIgnoreCase("null") == false)
+				{
+					return v.playerminions[target-1];
+				}
+				else
+				{
+					msg(v,"That wasn't a good target.");
+				}
+			}
+			
+			}
+			
+			}
+			
+			catch (NumberFormatException e)
+	        {
+	            print("Input string is not a sequence of digits.");
+	        }
+
+		}
+	}
+	
+	public static Minion targetFriendlyMinion(Variables v) throws InterruptedException
+
+	{
+
+		boolean isEnemy;
+		
+		int playerminions = 0;
+		
+		int enemyminions = 0;
+		
+		for(int i = 0; i < 8; i++)
+		{
+			
+			if(v.playerminions[i].name.equalsIgnoreCase("null") == false)
+			{
+				playerminions++;
+			}
+		}
+		
+		if(playerminions + enemyminions == 0)
+		{
+			return null;
+		}
+
+		playerorenemyloop:
+			isEnemy = false;
+		while(true)
+		{
+
+			updateBoard(v);
+
+			print("Target which minion?");
+
+			while (holder.isEmpty())
+				holder.wait();
+
+			String inputs = holder.remove(0);
+
+			try
+			{
+			int target = Integer.parseInt(inputs);
+			
+			if(target > 0 && target < 9)
+			{
+
+			if(isEnemy == true)
+			{
+
+				if(v.enemyminions[target-1].name.equalsIgnoreCase("null") == false)
+				{
+					
+					return v.enemyminions[target-1];
+				}
+				else
+				{
+					msg(v,"That wasn't a good target.");
+				}
+			}
+			else
+			{
+				if(v.playerminions[target-1].name.equalsIgnoreCase("null") == false)
+				{
+					return v.playerminions[target-1];
+				}
+				else
+				{
+					msg(v,"That wasn't a good target.");
+				}
+			}
+			
+			}
+			
+			}
+			
+			catch (NumberFormatException e)
+	        {
+	            print("Input string is not a sequence of digits.");
+	        }
+
+		}
+	}
 	
 	public static Minion targetMinionorFace(Variables v) throws InterruptedException
 	{
 
 		boolean isEnemy;
 
+		int playerminions = 0;
+		
+		int enemyminions = 0;
+		
+		for(int i = 0; i < 8; i++)
+		{
+			if(v.enemyminions[i].name.equalsIgnoreCase("null") == false)
+			{
+				playerminions++;
+			}
+			if(v.playerminions[i].name.equalsIgnoreCase("null") == false)
+			{
+				enemyminions++;
+			}
+		}
+		
 		playerorenemyloop:
 			while(true)
 			{
@@ -1043,13 +1195,21 @@ public class Main{
 
 				if(inputs.equalsIgnoreCase("enemy"))
 				{
+					if(enemyminions > 0)
+					{
 					isEnemy = true;
 					break playerorenemyloop;
+					}
+					
 				}
 				else if(inputs.equalsIgnoreCase("player"))
 				{
+					
+					if(playerminions > 0)
+					{
 					isEnemy = false;
 					break playerorenemyloop;
+					}
 				}
 				else if(inputs.equalsIgnoreCase("face"))
 				{
@@ -1069,9 +1229,12 @@ public class Main{
 
 			String inputs = holder.remove(0);
 
+			try
+			{
 			int target = Integer.parseInt(inputs);
 			
-			if(target > 0)
+			
+			if(target > 0 && target < 9)
 			{
 
 			if(isEnemy == true)
@@ -1101,6 +1264,13 @@ public class Main{
 			
 			}
 
+		}
+		
+		catch (NumberFormatException e)
+        {
+            print("Input string is not a sequence of digits.");
+        }
+			
 		}
 	}
 	
@@ -1135,6 +1305,12 @@ public class Main{
 
 	}
 	
+	public static Card cardFromName(String s)
+	{
+		CardDatabase cd = new CardDatabase();
+		return cd.cardFromName(s);
+	}
+	
 	public static Minion minionFromCard(Card card, Variables v) throws InterruptedException
 	{
 		MinionDatabase db = new MinionDatabase();
@@ -1143,13 +1319,59 @@ public class Main{
 		if(minion.name == "Dark Iron Dwarf")
 		{
 			Minion target = targetMinion(v);
-			
+			if(target != null)
+			{
 			target.custom.add("Dark Iron Dwarf");
+			}
+		}
+		
+		if(minion.name == "Abusive Sergeant")
+		{
+			Minion target = targetMinion(v);
+			
+			if(target != null)
+			{
+			target.custom.add("Dark Iron Dwarf");
+			}
 		}
 		
 		if(minion.name == "Sen'jin Shieldmasta")
 		{
 			minion.taunt = true;
+		}
+		
+		if(minion.name == "Murloc Raider")
+		{
+			minion.species = "Murloc";
+		}
+		
+		if(minion.name == "Murloc Scout")
+		{
+			minion.species = "Murloc";
+		}
+		if(minion.name == "Bloodfen Raptor")
+		{
+			minion.species = "Beast";
+		}
+		
+		if(minion.name == "Murloc Tidehunter")
+		{
+			minion.species = "Murloc";
+			//spawn a 1/1
+			playMinion(v.playerminions, new Minion(1,1,"Murloc Scout"));
+			playMinion(v.playerminions, new Minion(1,1,"Murloc Scout"));
+			
+			msg(v,"Spawned a guy");
+		}
+		
+		if(minion.name == "Aldor Peacekeeper")
+		{
+			Minion target = targetEnemyMinion(v);
+			
+			if(target != null)
+			{
+			target.custom.add("Aldor Peacekeeper");
+			}
 		}
 		
 		

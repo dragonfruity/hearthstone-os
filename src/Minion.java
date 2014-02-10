@@ -16,6 +16,7 @@ public class Minion{
 	boolean divineshield = false;
 	boolean charge = false;
 	Stack<String> custom = new Stack<String>();
+	String species;
 
     // the MountainBike subclass has
     // one constructor
@@ -55,13 +56,41 @@ public class Minion{
     	name = "null";
     }
     
+    public boolean isEnraged()
+    {
+    	if(currenthealth < maxhealth)
+    	{
+    		return true;
+    	}
+    	else
+    	{
+    		return false;
+    	}
+    }
     public int getDamage()
     {
     	int tempdamage = damage;
-    	if(custom.contains("Dark Iron Dwarf"))
+    	
+    	if(name == "Amani Berserker")
     	{
-    		tempdamage = tempdamage + 2;
+    		if(isEnraged())
+    		{
+    			tempdamage = tempdamage + 3;
+    		}
     	}
+    	
+    	for(int i = 0; i < custom.size(); i++)
+    	{
+    		if(custom.get(i).equalsIgnoreCase("Dark Iron Dwarf"))
+        	{
+        		tempdamage = tempdamage + 2;
+        	}
+        	if(custom.get(i).equalsIgnoreCase("Aldor Peacekeeper"))
+        	{
+        		tempdamage = 1;
+        	}
+    	}
+    	
     	
     	
     	return tempdamage;
